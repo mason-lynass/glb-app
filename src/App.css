@@ -1,0 +1,64 @@
+#root {
+  margin: 0 auto;
+  padding: 2vw;
+  text-align: center;
+  width: 95vw;
+}
+
+section {
+  margin: 40px auto;
+}
+
+#csv-import-flex {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+}
+
+#csv-import-flex section {
+  width: 400px;
+  margin: 0;
+}
+
+.one-order {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 500px;
+  gap: 20px;
+}
+
+.error {
+  max-width: 800px;
+}
+
+#circuit-inventory {
+  max-width: 700px;
+}
+
+.one-inventory-item {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.oii-count {
+  width: 100px;
+}
+
+.oii-description {
+  text-align: left;
+  width: fit-content;
+}
+
+#final-inventory {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 5vw;
+}
