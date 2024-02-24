@@ -21,8 +21,6 @@ function App() {
   const [allOrders, setAllOrders] = useState([]);
   const [dayOfWeekErrors, setDayOfWeekErrors] = useState([]);
 
-  console.log(circuitArray);
-
   useEffect(() => {
     if (bottleArray.length > 0 && shopifyArray.length > 0) {
       const newOrders = [[...shopifyArray].concat([...bottleArray])];
@@ -367,7 +365,7 @@ function App() {
 
   async function processCircuitCSV(results) {
     const ordersAsDrivers = splitIntoDrivers(results);
-    console.log(ordersAsDrivers)
+    console.log(ordersAsDrivers);
 
     const firstOrderProductsArray = circuitOrderProductsFromCSV(
       ordersAsDrivers[0]
@@ -418,15 +416,21 @@ function App() {
   }
 
   function shopifyOrders(orders) {
-    return <h4>Number of Shopify orders: {orders.length}</h4>;
-    // return orders.map((o) => {
-    //   return (
-    //     <div className='one-order'>
-    //       <p>{o[`Shipping Name`]}</p>
-    //       <p>{o[`Shipping Street`]}</p>
-    //     </div>
-    //   );
-    // });
+    console.log(orders);
+    // return <h4>Number of Shopify orders: {orders.length}</h4>;
+    return (
+      <>
+        <h4>Number of Shopify orders: {orders.length}</h4>
+        {orders.map((o) => {
+          return (
+            <div className="one-order">
+              <p>{o[`Seller Order ID`]}</p>
+              <p>{o[`Name`]}</p>
+            </div>
+          );
+        })}
+      </>
+    );
   }
 
   function bottleOrders(orders) {
@@ -474,7 +478,7 @@ function App() {
       marginBottom: 10,
     },
     browseFile: {
-      width: "20%",
+      width: "130px",
     },
     acceptedFile: {
       border: "1px solid #ccc",
@@ -482,6 +486,7 @@ function App() {
       lineHeight: 2.5,
       paddingLeft: 10,
       width: "80%",
+      margin: "0 10px",
     },
     remove: {
       borderRadius: 0,
@@ -596,50 +601,54 @@ function App() {
           {bottleArray.length > 0 ? bottleOrders(bottleArray) : ""}
           {dOWErrors()}
         </section>
-        <section>
-          <label>Type a file name for the CSV file to import in Circuit:</label>
-          <input
-            type="text"
-            value={circuitFileName}
-            onChange={(e) => setCircuitFileName(e.target.value)}
-          ></input>
-        </section>
-        <section>
-          <CSVDownloader
-            filename={circuitFileName}
-            data={allOrders[0]}
-            //           data={[
-            //             {
-            //               'Day of Week': "Thursday",
-            // 'Email': "kristen.spitaletta@gmail.com",
-            // 'Name': "#16968",
-            // 'Note Attributes': "The earliest I can accept a delivery is: 03:00 PM\nThe latest I can accept a delivery is: 05:30 PM\nSounds good!: Yes",
-            // 'Notes': "1 Really Good Peanut Butter Sesame Cookies , 1 Really Good Snickerdoodle Cookies , 1 Really Good Triple Chocolate Cookies , 1 Plain Cheese, 1 Hot Sausage",
-            // 'Shipping Method': "Free Delivery on orders over $50",
-            // 'Shipping Name': "Kristen Spitaletta",
-            // 'Shipping Phone': "5514047120",
-            // 'Shipping Street': "1833 1st Ave N",
-            // 'Shipping Zip': "98109"
-            //             },
-            //             {
-            //               'Day of Week': "Thursday",
-            // 'Email': "kristen.spitaletta@gmail.com",
-            // 'Name': "#16968",
-            // 'Note Attributes': "The earliest I can accept a delivery is: 03:00 PM\nThe latest I can accept a delivery is: 05:30 PM\nSounds good!: Yes",
-            // 'Notes': "1 Really Good Peanut Butter Sesame Cookies , 1 Really Good Snickerdoodle Cookies , 1 Really Good Triple Chocolate Cookies , 1 Plain Cheese, 1 Hot Sausage",
-            // 'Shipping Method': "Free Delivery on orders over $50",
-            // 'Shipping Name': "Kristen Spitaletta",
-            // 'Shipping Phone': "5514047120",
-            // 'Shipping Street': "1833 1st Ave N",
-            // 'Shipping Zip': "98109"
-            //             }
-            //           ]}
-            type="button"
-          >
-            Download the Circuit CSV file
-          </CSVDownloader>
-          {/* <CSVLink data={allOrders[0]}>Download the Circuit CSV</CSVLink> */}
-        </section>
+        <div id="circuit-file-downloader">
+          <section id="circuit-filename-input">
+            <label>
+              Type a file name for the CSV file to import in Circuit:
+            </label>
+            <input
+              type="text"
+              value={circuitFileName}
+              onChange={(e) => setCircuitFileName(e.target.value)}
+            ></input>
+          </section>
+          <section>
+            <CSVDownloader
+              filename={circuitFileName}
+              data={allOrders[0]}
+              //           data={[
+              //             {
+              //               'Day of Week': "Thursday",
+              // 'Email': "kristen.spitaletta@gmail.com",
+              // 'Name': "#16968",
+              // 'Note Attributes': "The earliest I can accept a delivery is: 03:00 PM\nThe latest I can accept a delivery is: 05:30 PM\nSounds good!: Yes",
+              // 'Notes': "1 Really Good Peanut Butter Sesame Cookies , 1 Really Good Snickerdoodle Cookies , 1 Really Good Triple Chocolate Cookies , 1 Plain Cheese, 1 Hot Sausage",
+              // 'Shipping Method': "Free Delivery on orders over $50",
+              // 'Shipping Name': "Kristen Spitaletta",
+              // 'Shipping Phone': "5514047120",
+              // 'Shipping Street': "1833 1st Ave N",
+              // 'Shipping Zip': "98109"
+              //             },
+              //             {
+              //               'Day of Week': "Thursday",
+              // 'Email': "kristen.spitaletta@gmail.com",
+              // 'Name': "#16968",
+              // 'Note Attributes': "The earliest I can accept a delivery is: 03:00 PM\nThe latest I can accept a delivery is: 05:30 PM\nSounds good!: Yes",
+              // 'Notes': "1 Really Good Peanut Butter Sesame Cookies , 1 Really Good Snickerdoodle Cookies , 1 Really Good Triple Chocolate Cookies , 1 Plain Cheese, 1 Hot Sausage",
+              // 'Shipping Method': "Free Delivery on orders over $50",
+              // 'Shipping Name': "Kristen Spitaletta",
+              // 'Shipping Phone': "5514047120",
+              // 'Shipping Street': "1833 1st Ave N",
+              // 'Shipping Zip': "98109"
+              //             }
+              //           ]}
+              type="button"
+            >
+              Download the Circuit CSV file
+            </CSVDownloader>
+            {/* <CSVLink data={allOrders[0]}>Download the Circuit CSV</CSVLink> */}
+          </section>
+        </div>
         <hr />
         <section id="circuit-csv-reader">
           <h3>Upload the day's Circuit CSV file here:</h3>
@@ -678,10 +687,16 @@ function App() {
             )}
           </CSVReader>
         </section>
-        <section id='final-inventory'>
-          {driverOneInventory.length > 0 ? circuitInventory(driverOne, driverOneInventory) : ""}
-          {driverTwoInventory.length > 0 ? circuitInventory(driverTwo, driverTwoInventory) : ""}
-          {driverThreeInventory.length > 0 ? circuitInventory(driverThree, driverThreeInventory) : ""}
+        <section id="final-inventory">
+          {driverOneInventory.length > 0
+            ? circuitInventory(driverOne, driverOneInventory)
+            : ""}
+          {driverTwoInventory.length > 0
+            ? circuitInventory(driverTwo, driverTwoInventory)
+            : ""}
+          {driverThreeInventory.length > 0
+            ? circuitInventory(driverThree, driverThreeInventory)
+            : ""}
         </section>
       </main>
     </>

@@ -35,6 +35,35 @@ section {
   max-width: 800px;
 }
 
+#circuit-file-downloader {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: center;
+  align-items: center;
+}
+
+#circuit-file-downloader section {
+  margin: 10px;
+}
+
+#circuit-filename-input {
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-items: center;
+}
+
+#circuit-filename-input input {
+  width: 200px;
+  margin: 10px auto;
+  height: 30px;
+  font-size: 18px;
+}
+
+#circuit-csv-reader {
+  width: 600px;
+}
+
 #circuit-inventory {
   max-width: 700px;
 }
@@ -48,11 +77,13 @@ section {
 
 .oii-count {
   width: 100px;
+  margin: 2px;
 }
 
 .oii-description {
   text-align: left;
   width: fit-content;
+  margin: 0;
 }
 
 #final-inventory {
