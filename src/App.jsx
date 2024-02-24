@@ -242,17 +242,24 @@ function App() {
     const catchArray = [];
     const dailyOrders = results;
 
+    console.log(dailyOrders)
+
     dailyOrders.forEach((order) => {
       let tempArray = [];
       // some rows have products in the "Products" column
-      let products = order["products"].split("•");
+      let products = []
+      if (order["products"]) products = order["products"].split("•");
       let notes = "";
+
+      
 
       // if they don't have any products in the "Products" column,
       // they're in the "Notes" column
       // products.length will be 1 because "Products" = ['']
-      if (products.length === 1) {
-        notes = order["notes"].split(",");
+      if (products.length < 2) {
+        if (order["notes"]) notes = order["notes"].split(",");
+        if (order["Notes"]) notes = order["Notes"].split(",");
+        
         // these are already formatted correctly, we don't need to reformat them
         if (notes.length !== 1) catchArray.push(notes.toString());
       }
@@ -282,6 +289,7 @@ function App() {
   }
 
   function makeInventoryFromIndividualProducts(inputArray) {
+    console.log(inputArray)
     const resultArray = [];
 
     for (let i = 0; i < inputArray.length; i++) {
@@ -332,7 +340,6 @@ function App() {
   }
 
   function splitIntoDrivers(input) {
-    console.log(input);
     const firstDriver = input.data[0].driver;
     setDriverOne(firstDriver);
     const firstDriverOrders = input.data.filter(
@@ -342,18 +349,23 @@ function App() {
       (order) => order.driver !== firstDriver
     );
 
-    const secondDriver = otherOrders[0].driver;
-    setDriverTwo(secondDriver);
-    const secondDriverOrders = otherOrders.filter(
-      (order) => order.driver === secondDriver
-    );
+    let secondDriverOrders;
+    let thirdDriverOrders;
 
-    let thirdDriverOrders = input.data.filter(
-      (order) => order.driver !== secondDriver && order.driver !== firstDriver
-    );
+    if (otherOrders.length > 0) {
+      const secondDriver = otherOrders[0].driver;
+      setDriverTwo(secondDriver);
+      secondDriverOrders = otherOrders.filter(
+        (order) => order.driver === secondDriver
+      );
 
-    if (thirdDriverOrders.length > 0) {
-      setDriverThree(thirdDriverOrders[0].driver);
+      thirdDriverOrders = input.data.filter(
+        (order) => order.driver !== secondDriver && order.driver !== firstDriver
+      );
+
+      if (thirdDriverOrders.length > 0) {
+        setDriverThree(thirdDriverOrders[0].driver);
+      }
     }
 
     console.log(firstDriverOrders);
@@ -370,19 +382,28 @@ function App() {
     const firstOrderProductsArray = circuitOrderProductsFromCSV(
       ordersAsDrivers[0]
     );
-    const secondOrderProductsArray = circuitOrderProductsFromCSV(
-      ordersAsDrivers[1]
-    );
+    let secondOrderProductsArray = undefined;
+    if (ordersAsDrivers[1]) {
+      console.log("yes");
+      secondOrderProductsArray = circuitOrderProductsFromCSV(
+        ordersAsDrivers[1]
+      );
+    }
     let thirdOrderProductsArray = undefined;
-    if (ordersAsDrivers[2].length > 0) {
+    if (ordersAsDrivers[2]) {
       console.log("yes");
       thirdOrderProductsArray = circuitOrderProductsFromCSV(ordersAsDrivers[2]);
     }
 
     const firstIndividualProductsArray =
       circuitOrderProductsToIndividualProducts(firstOrderProductsArray);
-    const secondIndividualProductsArray =
-      circuitOrderProductsToIndividualProducts(secondOrderProductsArray);
+    let secondIndividualProductsArray = undefined;
+    if (secondOrderProductsArray !== undefined) {
+      console.log("ya");
+      secondIndividualProductsArray = circuitOrderProductsToIndividualProducts(
+        secondOrderProductsArray
+      );
+    }
     let thirdIndividualProductsArray = undefined;
     if (thirdOrderProductsArray !== undefined) {
       console.log("ya");
@@ -394,9 +415,13 @@ function App() {
     const firstResultArray = makeInventoryFromIndividualProducts(
       firstIndividualProductsArray
     );
-    const secondResultArray = makeInventoryFromIndividualProducts(
-      secondIndividualProductsArray
-    );
+    let secondResultArray = [];
+    if (secondIndividualProductsArray !== undefined) {
+      console.log("uh huh");
+      secondResultArray = makeInventoryFromIndividualProducts(
+        secondIndividualProductsArray
+      );
+    }
     let thirdResultArray = [];
     if (thirdIndividualProductsArray !== undefined) {
       console.log("uh huh");
@@ -409,6 +434,7 @@ function App() {
 
   async function circuitSubmit(results) {
     const inventoryArray = await processCircuitCSV(results);
+    console.log(inventoryArray)
     setCircuitArray(inventoryArray);
     setDriverOneInventory(inventoryArray[0]);
     setDriverTwoInventory(inventoryArray[1]);
