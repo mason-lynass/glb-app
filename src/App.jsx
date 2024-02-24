@@ -21,6 +21,7 @@ function App() {
   const [allOrders, setAllOrders] = useState([]);
   const [dayOfWeekErrors, setDayOfWeekErrors] = useState([]);
 
+  // only do this when both files are uploaded and processed
   useEffect(() => {
     if (bottleArray.length > 0 && shopifyArray.length > 0) {
       const newOrders = [[...shopifyArray].concat([...bottleArray])];
@@ -29,16 +30,9 @@ function App() {
     }
   }, [bottleArray, shopifyArray]);
 
-  function handleFileChange(e) {
-    console.log("this");
-    if (e && e.target.files) {
-      setShopifyFile(e.target.files[0]);
-    }
-  }
-
   // headers from the CSV file that we want in our customer objects
   // removing most of the headers for readability
-  const allowed = [
+  const shopifyAllowed = [
     "Name",
     "Email",
     "Earliest Time",
@@ -65,16 +59,54 @@ function App() {
     "ERROR",
   ];
 
-  async function getCustomersFromCSV(results) {
-    const modifiedCustomers = await mainFunction(results);
-    setShopifyArray(modifiedCustomers);
-  }
+  // for now, this is a reverse filter, add columns we don't need
+  const bottleAllowed = [
+   "Account Credit Used",
+   "Amount Charged to Customer",
+   "Bottle Fee",
+   "Cart Total",
+   "Dietary Options",
+   "Discount",
+   "Fee Charged to Customer",
+   "Fulfillment",
+   "Fulfillment Method",
+   "Fulfillment Notes",
+   "Fulfillment Slot Day",
+   "Fulfillment Slot Time",
+   "Membership Settings",
+   "Membership Tier",
+   "Net",
+   "Number of Items",
+   "Number Of Times Customer Has Ordered",
+   "Package",
+   "Payment Status",
+   "Processing Fee",
+   "Refund",
+   "Store",
+   "Subtotal",
+   "Tax",
+   "Tip",
+   "Total",
+   "Transaction Date",
+   "What's your name?"
+  ]
 
   // this function works with any array of strings, you can give it any list of headers to use in the filter
   // but right now I'm only using this with 'allowed'
-  function filterKeysInObjectsInArrayByKeys(array) {
+  function filterKeysInObjectsInArrayByKeys(array, allowed) {
     return array.map((r) => {
-      return Object.keys(r)
+      if (allowed === bottleAllowed) {
+        return Object.keys(r)
+        .filter((key) => !allowed.includes(key))
+        .reduce((obj, key) => {
+          return {
+            ...obj,
+            [key]: r[key],
+          };
+        }, {});
+      }
+
+      else return Object.keys(r)
         .filter((key) => allowed.includes(key))
         .reduce((obj, key) => {
           return {
@@ -86,7 +118,7 @@ function App() {
   }
 
   // turns an array of customer data from the CSV into an array of customer objects
-  function getDeliveryCustomersFromArray(array) {
+  function getShopifyDeliveryCustomersFromArray(array) {
     let anotherItemNumber = 2;
     let deliveryCustomers = [];
 
@@ -116,6 +148,38 @@ function App() {
     }
     return deliveryCustomers;
   }
+
+    // turns an array of customer data from the CSV into an array of customer objects
+    function getBottleDeliveryCustomersFromArray(array) {
+      let anotherItemNumber = 2;
+      let deliveryCustomers = [];
+  
+      for (let i = 0; i < array.length; i++) {
+        let orderRow = array[i];
+        // if an object with the same order # already exists:
+        if (deliveryCustomers.some((d) => d.Name === orderRow.Name)) {
+          let target = deliveryCustomers.find((d) => d.Name === orderRow.Name);
+          let quant = orderRow["Lineitem quantity"];
+          let name = orderRow["Lineitem name"];
+          // making a new key / value pair in an existing object with an item they ordered (and its quantity)
+          target[`Lineitem ${anotherItemNumber}`] = `${quant} ${name}`;
+          anotherItemNumber++;
+        }
+        // skip the last row and any other rows that don't have any data
+        else if (!orderRow["Lineitem name"]) continue;
+        // if there isn't an object with the same order # yet, gotta add one to the deliveryCustomers array
+        else {
+          orderRow[
+            "Lineitem 1"
+          ] = `${orderRow["Lineitem quantity"]} ${orderRow["Lineitem name"]}`;
+          delete orderRow["Lineitem name"];
+          delete orderRow["Lineitem quantity"];
+          deliveryCustomers.push(orderRow);
+          anotherItemNumber = 2;
+        }
+      }
+      return deliveryCustomers;
+    }
 
   // takes in an array of customer objects, returns the same objects with some different keys & values
   function modifyCustomers(array) {
@@ -211,12 +275,28 @@ function App() {
     return modifiedCustomers;
   }
 
-  async function processCSVForCircuit(results) {
+  async function processShopifyCSVForCircuit(results, allowed) {
     console.log("doing main function");
-    const filtered = filterKeysInObjectsInArrayByKeys(results);
-    // console.log(filtered)
-    const deliveryCustomers = getDeliveryCustomersFromArray(filtered);
-    // console.log(deliveryCustomers)
+    console.log()
+    const filtered = filterKeysInObjectsInArrayByKeys(results, allowed);
+    console.log(filtered)
+    const deliveryCustomers = getShopifyDeliveryCustomersFromArray(filtered);
+    console.log(deliveryCustomers)
+    // filtering again to get rid of those "Lineitem #" k / v pairs that we don't need anymore
+    const modifiedCustomers = filterKeysInObjectsInArrayByKeys(
+      modifyCustomers(deliveryCustomers)
+    );
+
+    return modifiedCustomers;
+  }
+
+  async function processBottleCSVForCircuit(results, allowed) {
+    console.log("doing main function");
+    console.log()
+    const filtered = filterKeysInObjectsInArrayByKeys(results, allowed);
+    console.log(filtered)
+    const deliveryCustomers = getBottleDeliveryCustomersFromArray(filtered);
+    console.log(deliveryCustomers)
     // filtering again to get rid of those "Lineitem #" k / v pairs that we don't need anymore
     const modifiedCustomers = filterKeysInObjectsInArrayByKeys(
       modifyCustomers(deliveryCustomers)
@@ -227,12 +307,13 @@ function App() {
 
   async function shopifySubmit(results) {
     console.log(results);
-    const modifiedCustomers = await processCSVForCircuit(results.data);
+    const modifiedCustomers = await processCSVForCircuit(results.data, shopifyAllowed);
     setShopifyArray(modifiedCustomers);
   }
 
   async function bottleSubmit(results) {
-    const modifiedCustomers = await processCSVForCircuit(results.data);
+    console.log(results);
+    const modifiedCustomers = await processCSVForCircuit(results.data, bottleAllowed);
     setBottleArray(modifiedCustomers);
   }
 
@@ -283,6 +364,8 @@ function App() {
   }
 
   function circuitOrderProductsToIndividualProducts(data) {
+    // converts one array of strings which could contain multiple comma-separated items
+    // to one array of strings, one item per index
     const dataString = data.toString();
     const resultArray = dataString.split(",");
     return resultArray;
@@ -326,20 +409,33 @@ function App() {
       }
     }
 
+    // sorts by quantity of item
     const sortedArray = resultArray.sort(
       (a, b) => Object.values(b)[0] - Object.values(a)[0]
     );
 
-    console.log(sortedArray);
-    const finalArray = [];
-    sortedArray.forEach((entry) => {
+    // visually it's nice when the inventory looks like
+    // pizza
+    // alcohol
+    // cookies
+    // and there are usually pretty low quantities of alcohol, compared to pizza
+    // so we make an array of cookies and an array of not-cookies, then put the cookies after the not-cookies
+    const justCookies = sortedArray.filter((item) => Object.keys(item).toString().includes('Cookies'))
+    const noCookies = sortedArray.filter((item) => !Object.keys(item).toString().includes('Cookies'))
+    const cookieSort = noCookies.concat(justCookies);
+
+    // converting array of objects to array of arrays: [item, quantity]
+    const finalArray = []    
+    cookieSort.forEach((entry) => {
       finalArray.push([Object.keys(entry)[0], Object.values(entry)[0]]);
     });
-    console.log(finalArray);
+
     return finalArray;
   }
 
   function splitIntoDrivers(input) {
+    // this is pretty logically simple, I think
+
     const firstDriver = input.data[0].driver;
     setDriverOne(firstDriver);
     const firstDriverOrders = input.data.filter(
@@ -351,7 +447,6 @@ function App() {
 
     let secondDriverOrders;
     let thirdDriverOrders;
-
     if (otherOrders.length > 0) {
       const secondDriver = otherOrders[0].driver;
       setDriverTwo(secondDriver);
@@ -368,16 +463,12 @@ function App() {
       }
     }
 
-    console.log(firstDriverOrders);
-    console.log(secondDriverOrders);
-    console.log(thirdDriverOrders);
-
     return [firstDriverOrders, secondDriverOrders, thirdDriverOrders];
   }
 
   async function processCircuitCSV(results) {
+    // split all orders into 1-3 drivers
     const ordersAsDrivers = splitIntoDrivers(results);
-    console.log(ordersAsDrivers);
 
     const firstOrderProductsArray = circuitOrderProductsFromCSV(
       ordersAsDrivers[0]
@@ -433,6 +524,8 @@ function App() {
   }
 
   async function circuitSubmit(results) {
+    // process the input CSV, assign new values to state variables
+    // which should change the DOM
     const inventoryArray = await processCircuitCSV(results);
     console.log(inventoryArray)
     setCircuitArray(inventoryArray);
@@ -642,37 +735,10 @@ function App() {
             <CSVDownloader
               filename={circuitFileName}
               data={allOrders[0]}
-              //           data={[
-              //             {
-              //               'Day of Week': "Thursday",
-              // 'Email': "kristen.spitaletta@gmail.com",
-              // 'Name': "#16968",
-              // 'Note Attributes': "The earliest I can accept a delivery is: 03:00 PM\nThe latest I can accept a delivery is: 05:30 PM\nSounds good!: Yes",
-              // 'Notes': "1 Really Good Peanut Butter Sesame Cookies , 1 Really Good Snickerdoodle Cookies , 1 Really Good Triple Chocolate Cookies , 1 Plain Cheese, 1 Hot Sausage",
-              // 'Shipping Method': "Free Delivery on orders over $50",
-              // 'Shipping Name': "Kristen Spitaletta",
-              // 'Shipping Phone': "5514047120",
-              // 'Shipping Street': "1833 1st Ave N",
-              // 'Shipping Zip': "98109"
-              //             },
-              //             {
-              //               'Day of Week': "Thursday",
-              // 'Email': "kristen.spitaletta@gmail.com",
-              // 'Name': "#16968",
-              // 'Note Attributes': "The earliest I can accept a delivery is: 03:00 PM\nThe latest I can accept a delivery is: 05:30 PM\nSounds good!: Yes",
-              // 'Notes': "1 Really Good Peanut Butter Sesame Cookies , 1 Really Good Snickerdoodle Cookies , 1 Really Good Triple Chocolate Cookies , 1 Plain Cheese, 1 Hot Sausage",
-              // 'Shipping Method': "Free Delivery on orders over $50",
-              // 'Shipping Name': "Kristen Spitaletta",
-              // 'Shipping Phone': "5514047120",
-              // 'Shipping Street': "1833 1st Ave N",
-              // 'Shipping Zip': "98109"
-              //             }
-              //           ]}
               type="button"
             >
               Download the Circuit CSV file
             </CSVDownloader>
-            {/* <CSVLink data={allOrders[0]}>Download the Circuit CSV</CSVLink> */}
           </section>
         </div>
         <hr />
