@@ -187,7 +187,7 @@ export default function Shopify({ setShopifyArray, styles }) {
     const modifiedCustomers = filterKeysInObjectsInArrayByKeys(
       modifyCustomers(deliveryCustomers), shopifyAllowed
     );
-    const testie = [...modifiedCustomers].filter((r) => r.Name.includes('Kenji'))
+    const testie = [...modifiedCustomers].filter((r) => r.Name.includes('Mason'))
     console.log(testie)
     return modifiedCustomers;
   }
