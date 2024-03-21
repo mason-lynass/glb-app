@@ -10,8 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@shopify/shopify-api": "^9.5.1",
     "react": "^18.2.0",
     "react-csv": "^2.2.2",
+    "react-datepicker": "^6.3.0",
     "react-dom": "^18.2.0",
     "react-papaparse": "^4.4.0"
   },

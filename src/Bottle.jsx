@@ -1,6 +1,6 @@
 import { usePapaParse, useCSVReader, useCSVDownloader } from "react-papaparse";
 
-export default function Bottle({ setBottleArray, styles }) {
+export default function Bottle({ setBottleArray, setLoadingMessage, styles }) {
   const { CSVReader } = useCSVReader();
   const { CSVDownloader } = useCSVDownloader();
 
@@ -66,16 +66,19 @@ export default function Bottle({ setBottleArray, styles }) {
               }, {});
           });
     }
-    else return array.map((r) => {
-      return Object.keys(r)
-        .filter((key) => allowed.includes(key))
-        .reduce((obj, key) => {
-          return {
-            ...obj,
-            [key]: r[key],
-          };
-        }, {});
-    });
+    else {
+      setLoadingMessage('Bottle processing complete')
+      return array.map((r) => {
+        return Object.keys(r)
+          .filter((key) => allowed.includes(key))
+          .reduce((obj, key) => {
+            return {
+              ...obj,
+              [key]: r[key],
+            };
+          }, {});
+      });
+    } 
   }
 
   // turns an array of customer data from the CSV into an array of customer objects
@@ -113,9 +116,8 @@ export default function Bottle({ setBottleArray, styles }) {
 
   // takes in an array of customer objects, returns the same objects with some different keys & values
   function modifyCustomers(array) {
+    setLoadingMessage('formatting customer objects')
     let modifiedCustomers = array;
-
-    console.log(modifiedCustomers);
 
     // do this for every customer in the array
     for (let i = 0; i < modifiedCustomers.length; i++) {
@@ -129,8 +131,6 @@ export default function Bottle({ setBottleArray, styles }) {
             [key]: customer[key],
           };
         }, {});
-
-      console.log(customerItems);
 
       let itemsCatch = [];
 
@@ -155,7 +155,6 @@ export default function Bottle({ setBottleArray, styles }) {
         itemsCatch.push(`${itemQuantity} ${entry}`);
       }
 
-
       customer["Notes"] = itemsCatch.join(", ");
 
       customer["Seller Order ID"] = customer["Bottle ID"];
@@ -164,20 +163,14 @@ export default function Bottle({ setBottleArray, styles }) {
       customer["Address 1"] = customer["Address1"];
       customer["Address 2"] = customer["Address2"];
       customer["Earliest Time"] = customer["What's the Earliest Time You Can Accept Delivery?"];
-      // .split("\n")[0]
-      // .slice(-8);
       customer["Latest Time"] = customer["What's the Latest Time You Can Accept Delivery?"];
-      // .split("\n")[1]
-      // .slice(-8);
     }
 
     return modifiedCustomers;
   }
 
   async function processBottleCSVForCircuit(results, allowed) {
-    console.log("doing main function");
     const filtered = filterKeysInObjectsInArrayByKeys(results, allowed);
-    console.log(filtered);
     // const deliveryCustomers = getBottleDeliveryCustomersFromArray(filtered);
     // console.log(deliveryCustomers);
     // filtering again to get rid of those "Lineitem #" k / v pairs that we don't need anymore
@@ -190,11 +183,11 @@ export default function Bottle({ setBottleArray, styles }) {
   }
 
   async function bottleSubmit(results) {
+    setLoadingMessage('filtering unwanted data')
     const modifiedCustomers = await processBottleCSVForCircuit(
       results.data,
       bottleAllowed
     );
-    console.log(modifiedCustomers)
     setBottleArray(modifiedCustomers);
   }
 

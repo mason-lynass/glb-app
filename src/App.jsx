@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import "@shopify/shopify-api/adapters/web-api";
+import { shopifyApi, LATEST_API_VERSION, Session } from "@shopify/shopify-api";
 import { usePapaParse, useCSVReader, useCSVDownloader } from "react-papaparse";
 import { CSVLink } from "react-csv";
 import Shopify from "./shopify";
@@ -48,6 +50,7 @@ function App() {
   const [driverThree, setDriverThree] = useState("");
   const [allOrders, setAllOrders] = useState([]);
   const [dayOfWeekErrors, setDayOfWeekErrors] = useState([]);
+  const [loadingMessage, setLoadingMessage] = useState('')
 
   // only do this when both files are uploaded and processed
   useEffect(() => {
@@ -55,20 +58,30 @@ function App() {
       const newOrders = [[...shopifyArray].concat([...bottleArray])];
       setAllOrders(newOrders);
       setDayOfWeekErrors(newOrders[0].filter((o) => o.ERROR));
+      setLoadingMessage('Bottle & Shopify finished')
     }
   }, [bottleArray, shopifyArray]);
 
+  console.log(bottleArray, shopifyArray)
+
   function shopifyOrders(orders) {
-    console.log(orders);
     // return <h4>Number of Shopify orders: {orders.length}</h4>;
     return (
       <>
         <h4>Number of Shopify orders: {orders.length}</h4>
         {orders.map((o) => {
           return (
-            <div className="one-order">
+            <div className="one-order" key={o[`Seller Order ID`]}>
               <p>{o[`Seller Order ID`]}</p>
               <p>{o[`Name`]}</p>
+              <p>{o["Address 1"]}</p>
+              <p>{o["City"]}</p>
+              <p>{o["Email"]}</p>
+              <p>
+                {o["Earliest Time"] === "11:00 AM" ? "" : o["Earliest Time"]}
+              </p>
+              <p>{o["Latest Time"] === "05:30 PM" ? "" : o["Latest Time"]}</p>
+              <p>{o["Day of Week"]}</p>
             </div>
           );
         })}
@@ -77,7 +90,27 @@ function App() {
   }
 
   function bottleOrders(orders) {
-    return <h4>Number of Bottle orders: {orders.length}</h4>;
+    return (
+      <>
+        <h4>Number of Bottle orders: {orders.length}</h4>
+        {orders.map((o) => {
+          return (
+            <div className="one-order" key={o[`Seller Order ID`]}>
+              <p>{o[`Seller Order ID`]}</p>
+              <p>{o[`Name`]}</p>
+              <p>{o["Address 1"]}</p>
+              <p>{o["City"]}</p>
+              <p>{o["Email"]}</p>
+              <p>
+                {o["Earliest Time"] === "10:30 AM" ? "" : o["Earliest Time"]}
+              </p>
+              <p>{o["Latest Time"] === "6:00 PM" ? "" : o["Latest Time"]}</p>
+              <p>-</p>
+            </div>
+          );
+        })}
+      </>
+    );
   }
 
   function dOWErrors() {
@@ -121,10 +154,13 @@ function App() {
       </header>
       <main>
         <div id="csv-import-flex">
-          <Shopify setShopifyArray={setShopifyArray} styles={styles} />
-          <Bottle setBottleArray={setBottleArray} styles={styles} />
+          <Bottle setBottleArray={setBottleArray} styles={styles} setLoadingMessage={setLoadingMessage}/>
+          <Shopify setShopifyArray={setShopifyArray} styles={styles} setLoadingMessage={setLoadingMessage}/>
         </div>
-        <section>
+        <div>
+          <p id='loading-message'>{loadingMessage}</p>
+        </div>
+        <section id="orders-table">
           {shopifyArray.length > 0 ? shopifyOrders(shopifyArray) : ""}
           {bottleArray.length > 0 ? bottleOrders(bottleArray) : ""}
           {dOWErrors()}

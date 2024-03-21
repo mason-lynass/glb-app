@@ -22,13 +22,25 @@ section {
   margin: 0;
 }
 
+#loading-message {
+  font-size: 24px;
+}
+
+#orders-table {
+  width: 90vw;
+  max-width: 1260px;
+  height: 500px;
+  padding: 0 20px;
+  overflow: scroll;
+  margin: 20px auto;
+  border: 2px solid red;
+}
+
 .one-order {
-  display: flex;
-  flex-flow: row nowrap;
-  justify-content: space-between;
-  align-items: center;
-  max-width: 500px;
+  display: grid;
+  grid-template-columns: 60px 180px 300px 100px 230px 80px 80px 90px;
   gap: 20px;
+  border-bottom: 1px solid grey;
 }
 
 .error {
@@ -76,7 +88,7 @@ section {
 }
 
 .oii-count {
-  width: 100px;
+  width: 50px;
   margin: 2px;
 }
 

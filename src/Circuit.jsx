@@ -71,10 +71,12 @@ export default function Circuit({
       let target = inputArray[i];
 
       if (target === "1 Thermal Bag") continue;
+      // formatting the cookies to remove "Really Good" and the stuff at the end
       if (target.indexOf("Bake") > 0)
-        target = target.slice(0, target.indexOf("Bake") - 2);
+        target = target.slice(0, 2) + target.slice(14, target.indexOf("Bake") - 2);
       // just removing a space if the string starts with a space
       if (target[0] === " ") target = target.slice(1);
+
       // just the item, not the quantity
       let product = target.slice(2).toString();
       // just the quantity, as an integer
@@ -107,18 +109,29 @@ export default function Circuit({
     );
 
     // visually it's nice when the inventory looks like
-    // pizza
+    // naked pizza
+    // the rest of the pizza
     // alcohol
     // cookies
     // and there are usually pretty low quantities of alcohol, compared to pizza
-    // so we make an array of cookies and an array of not-cookies, then put the cookies after the not-cookies
+    // so we make an array of cookies and an array of not-cookies, 
+    // then we filter for the nakeds and not-nakeds,
+    // then we put the nakeds first,
+    // then put the cookies after the not-cookies
     const justCookies = sortedArray.filter((item) =>
       Object.keys(item).toString().includes("Cookies")
     );
     const noCookies = sortedArray.filter(
       (item) => !Object.keys(item).toString().includes("Cookies")
     );
-    const cookieSort = noCookies.concat(justCookies);
+    const justNakeds = noCookies.filter(
+      (item) => Object.keys(item).toString().includes("Naked")
+    )
+    const noCookiesNoNakeds = noCookies.filter(
+      (item) => !Object.keys(item).toString().includes("Naked")
+    )
+    const everythingButCookiesSort = justNakeds.concat(noCookiesNoNakeds)
+    const cookieSort = everythingButCookiesSort.concat(justCookies);
 
     // converting array of objects to array of arrays: [item, quantity]
     const finalArray = [];
