@@ -1,17 +1,14 @@
 import { useState, useEffect } from "react";
-import "@shopify/shopify-api/adapters/web-api";
-import { shopifyApi, LATEST_API_VERSION, Session } from "@shopify/shopify-api";
 import { usePapaParse, useCSVReader, useCSVDownloader } from "react-papaparse";
-import { CSVLink } from "react-csv";
 import Shopify from "./shopify";
 import Bottle from "./Bottle";
 import Circuit from "./Circuit";
 import "./App.css";
 
 function App() {
-  const { CSVReader } = useCSVReader();
   const { CSVDownloader } = useCSVDownloader();
 
+  // for the papaparse stuff
   const styles = {
     csvReader: {
       display: "flex",
@@ -62,13 +59,10 @@ function App() {
     }
   }, [bottleArray, shopifyArray]);
 
-  console.log(bottleArray, shopifyArray)
-
   function shopifyOrders(orders) {
-    // return <h4>Number of Shopify orders: {orders.length}</h4>;
     return (
       <>
-        <h4>Number of Shopify orders: {orders.length}</h4>
+        <h4>--- Shopify orders ---</h4>
         {orders.map((o) => {
           return (
             <div className="one-order" key={o[`Seller Order ID`]}>
@@ -92,7 +86,7 @@ function App() {
   function bottleOrders(orders) {
     return (
       <>
-        <h4>Number of Bottle orders: {orders.length}</h4>
+        <h4>--- Bottle orders ---</h4>
         {orders.map((o) => {
           return (
             <div className="one-order" key={o[`Seller Order ID`]}>
@@ -116,14 +110,16 @@ function App() {
   function dOWErrors() {
     return (
       <div>
-        <h4>Day of Week errors: {dayOfWeekErrors.length}</h4>
+        <h4>--- Day of Week errors ---</h4>
         {dayOfWeekErrors.map((o) => {
           return (
             <div className="one-order error">
-              <p>{o["Seller Order ID"]}</p>
-              <p>{o.Name}</p>
-              <p>{o["Day of Week"]}</p>
+              <p>{o[`Seller Order ID`]}</p>
+              <p>{o[`Name`]}</p>
               <p>{o["Address 1"]}</p>
+              <p>{o["City"]}</p>
+              <p>{o["Email"]}</p>
+              <p>{o["Day of Week"]}</p>
             </div>
           );
         })}
@@ -154,13 +150,18 @@ function App() {
       </header>
       <main>
         <div id="csv-import-flex">
-          <Bottle setBottleArray={setBottleArray} styles={styles} setLoadingMessage={setLoadingMessage}/>
-          <Shopify setShopifyArray={setShopifyArray} styles={styles} setLoadingMessage={setLoadingMessage}/>
+          <Bottle setBottleArray={setBottleArray} setLoadingMessage={setLoadingMessage}/>
+          <Shopify setShopifyArray={setShopifyArray} setLoadingMessage={setLoadingMessage}/>
         </div>
         <div>
           <p id='loading-message'>{loadingMessage}</p>
         </div>
         <section id="orders-table">
+          <div id='orders-count-flex'>
+            <h4># of Shopify Orders: {shopifyArray.length}</h4>
+            <h4># of Bottle Orders: {bottleArray.length}</h4>
+            <h4>Day of Week errors: {dayOfWeekErrors.length}</h4>
+          </div>
           {shopifyArray.length > 0 ? shopifyOrders(shopifyArray) : ""}
           {bottleArray.length > 0 ? bottleOrders(bottleArray) : ""}
           {dOWErrors()}

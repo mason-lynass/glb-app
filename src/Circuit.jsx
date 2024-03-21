@@ -1,4 +1,4 @@
-import { usePapaParse, useCSVReader, useCSVDownloader } from "react-papaparse";
+import { useCSVReader } from "react-papaparse";
 
 export default function Circuit({
   styles,
@@ -18,6 +18,7 @@ export default function Circuit({
     const catchArray = [];
     const dailyOrders = results;
 
+    // for each row of the spreadsheet
     dailyOrders.forEach((order) => {
       let tempArray = [];
       // some rows have products in the "Products" column
@@ -33,8 +34,8 @@ export default function Circuit({
         if (order["Notes"]) notes = order["Notes"].split(",");
 
         // these are already formatted correctly, we don't need to reformat them
-        if (notes.length) { 
-            catchArray.push(notes.toString());
+        if (notes.length) {
+          catchArray.push(notes.toString());
         }
       }
 
@@ -56,39 +57,50 @@ export default function Circuit({
     return catchArray;
   }
 
+  // converts one array of strings which could contain multiple comma-separated items
+  // to one array of strings, one item per index
   function circuitOrderProductsToIndividualProducts(data) {
-    // converts one array of strings which could contain multiple comma-separated items
-    // to one array of strings, one item per index
     const dataString = data.toString();
     const resultArray = dataString.split(",");
     return resultArray;
   }
 
+  // converts argument array of individual products into result array of products grouped together
   function makeInventoryFromIndividualProducts(inputArray) {
     const resultArray = [];
 
     for (let i = 0; i < inputArray.length; i++) {
+      // for each individual product
       let target = inputArray[i];
 
-      if (target === "1 Thermal Bag") continue;
-      // formatting the cookies to remove "Really Good" and the stuff at the end
-      if (target.indexOf("Bake") > 0)
-        target = target.slice(0, 2) + target.slice(14, target.indexOf("Bake") - 2);
-      // just removing a space if the string starts with a space
-      if (target[0] === " ") target = target.slice(1);
+      if (target === "1 Thermal Bag") continue; // if it's a bag, we don't need it in the inventory
 
-      // just the item, not the quantity
-      let product = target.slice(2).toString();
-      // just the quantity, as an integer
-      let count = parseInt(target.slice(0, 1));
+      if (target.indexOf("Bake") > 0)
+        // formatting the cookies to remove "Really Good" and the stuff at the end
+        target =
+          target.slice(0, 2) + target.slice(14, target.indexOf("Bake") - 2);
+
+      if (target[0] === " ") target = target.slice(1); // just removing a space if the string starts with a space
+
+      // I put this in here to ignore things that end up in the "Notes" section that are not products
+      // because if they don't start with a number, they don't have a count, and they're not a product
+      if (isNaN(target[0]) === true) continue;
+
+      let product = target.slice(2).toString(); // just the item, not the quantity
+      if (product[0] === " ") product = product.slice(1);
+      if (product.endsWith(" ")) product = product.slice(0, -1);
+
+      let count = parseInt(target.slice(0, 1)); // just the quantity, as an integer
 
       // if the array is empty, gotta add the first product
-      if (resultArray.length < 1) resultArray.push({ [product]: count });
+      if (resultArray.length < 1)
+        resultArray.push({
+          [product]: count,
+        });
       // if the array has an object with key === product, add the quantity to the current quantity
       else if (
         resultArray.filter((r) => Object.keys(r).includes(product)).length > 0
       ) {
-        //   console.log("filter one", product);
         let currentProduct = resultArray.filter(
           (r) => Object.keys(r)[0] === product
         )[0];
@@ -98,7 +110,6 @@ export default function Circuit({
       else if (
         resultArray.filter((r) => Object.keys(r).includes(product)).length === 0
       ) {
-        //   console.log("adding a product");
         resultArray.push({ [product]: count });
       }
     }
@@ -114,7 +125,7 @@ export default function Circuit({
     // alcohol
     // cookies
     // and there are usually pretty low quantities of alcohol, compared to pizza
-    // so we make an array of cookies and an array of not-cookies, 
+    // so we make an array of cookies and an array of not-cookies,
     // then we filter for the nakeds and not-nakeds,
     // then we put the nakeds first,
     // then put the cookies after the not-cookies
@@ -124,13 +135,13 @@ export default function Circuit({
     const noCookies = sortedArray.filter(
       (item) => !Object.keys(item).toString().includes("Cookies")
     );
-    const justNakeds = noCookies.filter(
-      (item) => Object.keys(item).toString().includes("Naked")
-    )
+    const justNakeds = noCookies.filter((item) =>
+      Object.keys(item).toString().includes("Naked")
+    );
     const noCookiesNoNakeds = noCookies.filter(
       (item) => !Object.keys(item).toString().includes("Naked")
-    )
-    const everythingButCookiesSort = justNakeds.concat(noCookiesNoNakeds)
+    );
+    const everythingButCookiesSort = justNakeds.concat(noCookiesNoNakeds);
     const cookieSort = everythingButCookiesSort.concat(justCookies);
 
     // converting array of objects to array of arrays: [item, quantity]
@@ -142,9 +153,8 @@ export default function Circuit({
     return finalArray;
   }
 
+  // this is pretty logically simple, I think
   function splitIntoDrivers(input) {
-    // this is pretty logically simple, I think
-
     const firstDriver = input.data[0].driver;
     setDriverOne(firstDriver);
     const firstDriverOrders = input.data.filter(
@@ -176,23 +186,20 @@ export default function Circuit({
   }
 
   async function processCircuitCSV(results) {
-    // split all orders into 1-3 drivers
-    const ordersAsDrivers = splitIntoDrivers(results);
-
+    
+    const ordersAsDrivers = splitIntoDrivers(results); // split all orders into 1-3 drivers
     // get all products by order for each driver
     const firstOrderProductsArray = circuitOrderProductsFromCSV(
       ordersAsDrivers[0]
     );
     let secondOrderProductsArray = undefined;
     if (ordersAsDrivers[1]) {
-      console.log("yes");
       secondOrderProductsArray = circuitOrderProductsFromCSV(
         ordersAsDrivers[1]
       );
     }
     let thirdOrderProductsArray = undefined;
     if (ordersAsDrivers[2] && ordersAsDrivers[2].length > 0) {
-      console.log("yes");
       thirdOrderProductsArray = circuitOrderProductsFromCSV(ordersAsDrivers[2]);
     }
 

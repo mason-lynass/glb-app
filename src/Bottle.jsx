@@ -1,8 +1,6 @@
-import { usePapaParse, useCSVReader, useCSVDownloader } from "react-papaparse";
+import { read, utils } from 'xlsx';
 
-export default function Bottle({ setBottleArray, setLoadingMessage, styles }) {
-  const { CSVReader } = useCSVReader();
-  const { CSVDownloader } = useCSVDownloader();
+export default function Bottle({ setBottleArray, setLoadingMessage }) {
 
   // for now, this is a reverse filter, add columns we don't need
   const bottleAllowed = [
@@ -52,8 +50,8 @@ export default function Bottle({ setBottleArray, setLoadingMessage, styles }) {
   ]
 
   // this function works with any array of strings, you can give it any list of headers to use in the filter
-  // but right now I'm only using this with 'allowed'
   function filterKeysInObjectsInArrayByKeys(array, allowed) {
+    // removing any key that IS in bottleAllowed
     if (allowed === bottleAllowed) {
         return array.map((r) => {
             return Object.keys(r)
@@ -66,6 +64,7 @@ export default function Bottle({ setBottleArray, setLoadingMessage, styles }) {
               }, {});
           });
     }
+    // removing any key that IS NOT in the allowed argument
     else {
       setLoadingMessage('Bottle processing complete')
       return array.map((r) => {
@@ -79,39 +78,6 @@ export default function Bottle({ setBottleArray, setLoadingMessage, styles }) {
           }, {});
       });
     } 
-  }
-
-  // turns an array of customer data from the CSV into an array of customer objects
-  function getBottleDeliveryCustomersFromArray(array) {
-    console.log(array);
-    let anotherItemNumber = 2;
-    let deliveryCustomers = [];
-
-    for (let i = 0; i < array.length; i++) {
-      let orderRow = array[i];
-      // if an object with the same order # already exists:
-      if (deliveryCustomers.some((d) => d.Name === orderRow.Name)) {
-        let target = deliveryCustomers.find((d) => d.Name === orderRow.Name);
-        let quant = orderRow["Lineitem quantity"];
-        let name = orderRow["Lineitem name"];
-        // making a new key / value pair in an existing object with an item they ordered (and its quantity)
-        target[`Lineitem ${anotherItemNumber}`] = `${quant} ${name}`;
-        anotherItemNumber++;
-      }
-      // skip the last row and any other rows that don't have any data
-      else if (!orderRow["Lineitem name"]) continue;
-      // if there isn't an object with the same order # yet, gotta add one to the deliveryCustomers array
-      else {
-        orderRow[
-          "Lineitem 1"
-        ] = `${orderRow["Lineitem quantity"]} ${orderRow["Lineitem name"]}`;
-        delete orderRow["Lineitem name"];
-        delete orderRow["Lineitem quantity"];
-        deliveryCustomers.push(orderRow);
-        anotherItemNumber = 2;
-      }
-    }
-    return deliveryCustomers;
   }
 
   // takes in an array of customer objects, returns the same objects with some different keys & values
@@ -135,13 +101,13 @@ export default function Bottle({ setBottleArray, setLoadingMessage, styles }) {
       let itemsCatch = [];
 
       for (let entry in customerItems) {
-        // this is a catch for the cookies
-        // removing "Really Good"
-
+        
         const itemQuantity = customerItems[entry]
 
         if (itemQuantity < 1) continue;
 
+        // this is a catch for the cookies
+        // removing "Really Good"
         if (entry.includes("Really Good")) {
           entry = `${entry.slice(12)}`;
         }
@@ -152,11 +118,12 @@ export default function Bottle({ setBottleArray, setLoadingMessage, styles }) {
           entry = entry.slice(0, parenth - 1);
         }
 
+        // add item to itemsCatch array
         itemsCatch.push(`${itemQuantity} ${entry}`);
       }
 
+      // adding key/value pairs in the format that Circuit wants
       customer["Notes"] = itemsCatch.join(", ");
-
       customer["Seller Order ID"] = customer["Bottle ID"];
       customer["Name"] = customer["Customer Name"];
       customer["Phone Number"] = customer["Phone"];
@@ -170,10 +137,10 @@ export default function Bottle({ setBottleArray, setLoadingMessage, styles }) {
   }
 
   async function processBottleCSVForCircuit(results, allowed) {
+    // first it goes through the bottleAllowed filter to get rid of unwanted columns
     const filtered = filterKeysInObjectsInArrayByKeys(results, allowed);
-    // const deliveryCustomers = getBottleDeliveryCustomersFromArray(filtered);
-    // console.log(deliveryCustomers);
-    // filtering again to get rid of those "Lineitem #" k / v pairs that we don't need anymore
+    // then it goes through modifyCustomers to transform customer objects,
+    // before filtering again to get rid of those "Lineitem #" k / v pairs that we don't need anymore
     const modifiedCustomers = filterKeysInObjectsInArrayByKeys(
       modifyCustomers(filtered),
       finalFilter
@@ -182,10 +149,19 @@ export default function Bottle({ setBottleArray, setLoadingMessage, styles }) {
     return modifiedCustomers;
   }
 
-  async function bottleSubmit(results) {
+  async function bottleSubmit(e) {
+    // from https://docs.sheetjs.com/docs/demos/frontend/react/
+    const file = e.target.files[0]
+    const aB = await file.arrayBuffer()
+    const workbook = read(aB)
+
+    const targetSheetName = workbook.SheetNames.filter((sheet) => sheet.includes('Orders'))
+    const ordersSheet = workbook.Sheets[targetSheetName]
+    const data = utils.sheet_to_json(ordersSheet)
+
     setLoadingMessage('filtering unwanted data')
     const modifiedCustomers = await processBottleCSVForCircuit(
-      results.data,
+      data,
       bottleAllowed
     );
     setBottleArray(modifiedCustomers);
@@ -194,35 +170,7 @@ export default function Bottle({ setBottleArray, setLoadingMessage, styles }) {
   return (
     <section id="bottle-csv-reader">
       <h3>Upload the day's Bottle CSV file here:</h3>
-      <CSVReader
-        onUploadAccepted={(results) => bottleSubmit(results)}
-        config={{
-          header: true,
-          worker: true,
-          error: (e) => console.log(e),
-        }}
-      >
-        {({ getRootProps, acceptedFile, ProgressBar, getRemoveFileProps }) => (
-          <>
-            <div style={styles.csvReader}>
-              <button
-                type="button"
-                {...getRootProps()}
-                style={styles.browseFile}
-              >
-                Browse file
-              </button>
-              <div style={styles.acceptedFile}>
-                {acceptedFile && acceptedFile.name}
-              </div>
-              <button {...getRemoveFileProps()} style={styles.remove}>
-                Remove
-              </button>
-            </div>
-            <ProgressBar style={styles.progressBarBackgroundColor} />
-          </>
-        )}
-      </CSVReader>
+      <input type="file" id='bottle-xls-input' onChange={(e) => bottleSubmit(e)}/>
     </section>
   );
 }

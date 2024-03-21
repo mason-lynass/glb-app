@@ -10,12 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@shopify/shopify-api": "^9.5.1",
     "react": "^18.2.0",
-    "react-csv": "^2.2.2",
-    "react-datepicker": "^6.3.0",
     "react-dom": "^18.2.0",
-    "react-papaparse": "^4.4.0"
+    "react-papaparse": "^4.4.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.3/xlsx-0.19.3.tgz"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",

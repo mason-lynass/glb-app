@@ -36,6 +36,14 @@ section {
   border: 2px solid red;
 }
 
+#orders-count-flex {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
 .one-order {
   display: grid;
   grid-template-columns: 60px 180px 300px 100px 230px 80px 80px 90px;
