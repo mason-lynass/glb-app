@@ -57,7 +57,14 @@ function App() {
       setDayOfWeekErrors(newOrders[0].filter((o) => o.ERROR));
       setLoadingMessage('Bottle & Shopify finished')
     }
+    else if (bottleArray.length <= 0 && shopifyArray.length > 0) {
+      console.log(shopifyArray)
+      setDayOfWeekErrors(shopifyArray.filter((o) => o.ERROR))
+      setLoadingMessage('Shopify finished')
+    }
   }, [bottleArray, shopifyArray]);
+
+  console.log(bottleArray, shopifyArray)
 
   function shopifyOrders(orders) {
     return (
@@ -71,10 +78,12 @@ function App() {
               <p>{o["Address 1"]}</p>
               <p>{o["City"]}</p>
               <p>{o["Email"]}</p>
-              <p>
+              {/* <p>
                 {o["Earliest Time"] === "11:00 AM" ? "" : o["Earliest Time"]}
               </p>
-              <p>{o["Latest Time"] === "05:30 PM" ? "" : o["Latest Time"]}</p>
+              <p>{o["Latest Time"] === "05:30 PM" ? "" : o["Latest Time"]}</p> */}
+              <p>{o['Earliest Time']}</p>
+              <p>{o['Latest Time']}</p>
               <p>{o["Day of Week"]}</p>
             </div>
           );
@@ -95,10 +104,12 @@ function App() {
               <p>{o["Address 1"]}</p>
               <p>{o["City"]}</p>
               <p>{o["Email"]}</p>
-              <p>
+              {/* <p>
                 {o["Earliest Time"] === "10:30 AM" ? "" : o["Earliest Time"]}
               </p>
-              <p>{o["Latest Time"] === "6:00 PM" ? "" : o["Latest Time"]}</p>
+              <p>{o["Latest Time"] === "6:00 PM" ? "" : o["Latest Time"]}</p> */}
+              <p>{o['Earliest Time']}</p>
+              <p>{o['Latest Time']}</p>
               <p>-</p>
             </div>
           );

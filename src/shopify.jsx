@@ -62,7 +62,7 @@ export default function Shopify({ setShopifyArray, setLoadingMessage }) {
 
         // removing unnecessary extra info
         const parenth = item.indexOf("(");
-        if (parenth < item.indexOf("-")) {
+        if (parenth > 0 && parenth < item.indexOf("-")) {
           item = item.slice(0, parenth - 1);
         }
 
@@ -80,6 +80,7 @@ export default function Shopify({ setShopifyArray, setLoadingMessage }) {
 
       // adding key/value pairs in the format that Circuit wants
       customer["Notes"] = itemsCatch.join(", ");
+      customer["Products"] = itemsCatch.join(", ");
       customer["Day of Week"] = dayCatch;
       customer["Seller Order ID"] = customer["name"];
       customer["Name"] = customer.customer.defaultAddress.name;
@@ -130,6 +131,7 @@ export default function Shopify({ setShopifyArray, setLoadingMessage }) {
 
   async function processShopifyCSVForCircuit(results) {
     // console.log("doing main function");
+    console.log(results)
     setLoadingMessage("filtering data for target date");
     const targetDayOrders = getOnlyTargetDayObjects(results); // filter argument array of objects by input date
     const modifiedCustomers = modifyCustomers(targetDayOrders); // filtering again to get rid of those "Lineitem #" k / v pairs that we don't need anymore
@@ -148,6 +150,7 @@ export default function Shopify({ setShopifyArray, setLoadingMessage }) {
         processShopifyCSVForCircuit(data.orders.edges);
       });
   }
+
 
   return (
     <section>

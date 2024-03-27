@@ -13,7 +13,6 @@ export default function Bottle({ setBottleArray, setLoadingMessage }) {
     "Fee Charged to Customer",
     "Fulfillment",
     "Fulfillment Method",
-    "Fulfillment Notes",
     "Fulfillment Slot Day",
     "Fulfillment Slot Time",
     "Membership Settings",
@@ -123,7 +122,8 @@ export default function Bottle({ setBottleArray, setLoadingMessage }) {
       }
 
       // adding key/value pairs in the format that Circuit wants
-      customer["Notes"] = itemsCatch.join(", ");
+      customer["Products"] = itemsCatch.join(", ");
+      customer["Notes"] = `${customer["Customer Notes"]} - ${customer["Fulfillment Notes"]}`
       customer["Seller Order ID"] = customer["Bottle ID"];
       customer["Name"] = customer["Customer Name"];
       customer["Phone Number"] = customer["Phone"];
@@ -137,6 +137,7 @@ export default function Bottle({ setBottleArray, setLoadingMessage }) {
   }
 
   async function processBottleCSVForCircuit(results, allowed) {
+    console.log(results)
     // first it goes through the bottleAllowed filter to get rid of unwanted columns
     const filtered = filterKeysInObjectsInArrayByKeys(results, allowed);
     // then it goes through modifyCustomers to transform customer objects,
@@ -169,7 +170,7 @@ export default function Bottle({ setBottleArray, setLoadingMessage }) {
 
   return (
     <section id="bottle-csv-reader">
-      <h3>Upload the day's Bottle CSV file here:</h3>
+      <h3>Upload the day's Bottle XLS file here:</h3>
       <input type="file" id='bottle-xls-input' onChange={(e) => bottleSubmit(e)}/>
     </section>
   );
